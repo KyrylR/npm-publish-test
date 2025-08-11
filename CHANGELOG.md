@@ -1,6 +1,6 @@
 # Changelog
 
-## [none]
+## [release]
 
 YAY #11
 
