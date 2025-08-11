@@ -1,6 +1,6 @@
 # Changelog
 
-[patch]
+## [patch]
 
 YAY #5
 
