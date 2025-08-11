@@ -2,40 +2,9 @@
 
 import fs from 'fs';
 import path from 'path';
-
-type Level = 'major' | 'minor' | 'patch' | 'none' | 'major-rc' | 'minor-rc' | 'patch-rc' | 'rc' | 'release';
-
-function readJSON<T = any>(p: string): T {
-  return JSON.parse(fs.readFileSync(p, 'utf8')) as T;
-}
-
-function bumpBase(version: string, level: 'major' | 'minor' | 'patch' | 'none'): string {
-  const [majorStr, minorStr, patchStr] = version.split('.');
-  const major = parseInt(majorStr, 10);
-  const minor = parseInt(minorStr, 10);
-  const patch = parseInt(patchStr, 10);
-  if (Number.isNaN(major) || Number.isNaN(minor) || Number.isNaN(patch)) {
-    throw new Error(`Invalid semver in package.json: ${version}`);
-  }
-  switch (level) {
-    case 'major':
-      return `${major + 1}.0.0`;
-    case 'minor':
-      return `${major}.${minor + 1}.0`;
-    case 'patch':
-      return `${major}.${minor}.${patch + 1}`;
-    case 'none':
-      return version;
-  }
-}
-
-function parseRc(version: string): { base: string; rc: number | null } {
-  const m = version.match(/^(\d+)\.(\d+)\.(\d+)(?:-rc\.(\d+))?$/);
-  if (!m) throw new Error(`Invalid semver in package.json: ${version}`);
-  const base = `${m[1]}.${m[2]}.${m[3]}`;
-  const rc = m[4] ? parseInt(m[4], 10) : null;
-  return { base, rc };
-}
+import { allowedWhenNotRc, allowedWhenRc } from './constants';
+import type { Level } from './types';
+import { bumpBase, parseRc, readJSON } from './utils';
 
 export default function computeNextVersion(): { current: string; level: Level; next: string } {
   const pkgPath = path.resolve(process.cwd(), 'package.json');
@@ -54,8 +23,6 @@ export default function computeNextVersion(): { current: string; level: Level; n
   const { base, rc } = parseRc(pkg.version);
   const isRc = rc !== null;
 
-  const allowedWhenNotRc: Set<Level> = new Set(['patch', 'minor', 'major', 'none', 'patch-rc', 'minor-rc', 'major-rc']);
-  const allowedWhenRc: Set<Level> = new Set(['rc', 'release', 'none']);
   if ((isRc && !allowedWhenRc.has(level)) || (!isRc && !allowedWhenNotRc.has(level))) {
     throw new Error(`Invalid top H2 tag: ${level} for current version ${pkg.version}`);
   }

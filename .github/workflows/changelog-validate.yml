@@ -16,7 +16,5 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Validate CHANGELOG.md structure
-        run: node scripts/release/validate-changelog.js
-
-
+      - name: Validate structure
+        run: npx tsx scripts/release/validate-changelog.ts

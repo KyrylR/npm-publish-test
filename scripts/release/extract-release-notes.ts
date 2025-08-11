@@ -11,7 +11,8 @@ export default function extractReleaseNotes({ version }: { version?: string } = 
   }
   const changelog = fs.readFileSync(changelogPath, 'utf8');
 
-  const pkgVersion = version || (JSON.parse(fs.readFileSync(path.resolve(root, 'package.json'), 'utf8')) as { version: string }).version;
+  const pkgVersion =
+    version || (JSON.parse(fs.readFileSync(path.resolve(root, 'package.json'), 'utf8')) as { version: string }).version;
   const escapedVersion = pkgVersion.replace(/\./g, '\\.');
   const header = new RegExp(`^##\\s*\\[${escapedVersion}\\]\\s*$`, 'm');
 

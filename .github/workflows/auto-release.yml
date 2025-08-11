@@ -14,8 +14,10 @@ jobs:
     if: ${{ !contains(github.event.head_commit.message, 'chore(release):') }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup
         uses: ./.github/actions/setup
+
       - name: Validate structure
         run: npx tsx scripts/release/validate-changelog.ts
 
@@ -41,9 +43,7 @@ jobs:
         with:
           script: |
             require('ts-node/register/transpile-only');
-            const mod = require('./scripts/release/apply-release.ts');
-            const applyRelease = mod.default ?? mod;
-            await applyRelease({ core });
+            await require('./scripts/release/apply-release.ts')({ core });
 
       - run: bash scripts/git-user-config.sh
       - name: Commit version bump and changelog update

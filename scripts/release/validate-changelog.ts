@@ -2,6 +2,8 @@
 
 import fs from 'fs';
 import path from 'path';
+import { allowedWhenNotRc, allowedWhenRc } from './constants';
+import type {Level} from "./types";
 
 function fail(message: string): never {
   throw new Error(`CHANGELOG validation failed: ${message}`);
@@ -35,9 +37,8 @@ export default function validateChangelog(): void {
 
   const pkg = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8')) as { version: string };
   const isRc = /-rc\.\d+$/.test(pkg.version);
-  const normalized = firstH2Tag.toLowerCase();
-  const allowedWhenNotRc = new Set(['patch', 'minor', 'major', 'none', 'patch-rc', 'minor-rc', 'major-rc']);
-  const allowedWhenRc = new Set(['rc', 'release', 'none']);
+  const normalized = firstH2Tag.toLowerCase() as Level;
+
   const isAllowed = isRc ? allowedWhenRc.has(normalized) : allowedWhenNotRc.has(normalized);
   if (!isAllowed) {
     if (isRc) {
