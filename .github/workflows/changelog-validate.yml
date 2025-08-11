@@ -1,0 +1,22 @@
+name: changelog-validate
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Validate CHANGELOG.md structure
+        run: node scripts/release/validate-changelog.js
+
+

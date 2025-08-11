@@ -1,0 +1,77 @@
+name: "release"
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - tests
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  state:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - name: Determine if latest commit is a release commit
+        id: flag
+        run: |
+          msg=$(git log -1 --pretty=%B)
+          if echo "$msg" | grep -q '^chore(release):'; then
+            echo "is_release_commit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_release_commit=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Read current version
+        id: state
+        run: |
+          echo "local_version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          NOTES=$(node scripts/release/extract-release-notes.js)
+          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+    outputs:
+      local_version: ${{ steps.state.outputs.local_version }}
+      notes: ${{ steps.notes.outputs.notes }}
+      is_release_commit: ${{ steps.flag.outputs.is_release_commit }}
+
+  release:
+    runs-on: ubuntu-latest
+    needs: state
+    if: needs.state.outputs.is_release_commit == 'true'
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: v${{ needs.state.outputs.local_version }}
+          name: Release v${{ needs.state.outputs.local_version }}
+          body: |
+            ${{ needs.state.outputs.notes }}
+          draft: false
+          prerelease: false
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: state
+    if: needs.state.outputs.is_release_commit == 'true'
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+      - name: Setup
+        uses: ./.github/actions/setup
+      - name: Publish to npm
+        run: |
+          npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_ACCESS_TOKEN }}
+          npm run publish-to-npm
