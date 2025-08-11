@@ -6,5 +6,8 @@
   "description": "Test",
   "files": [
     "CHANGELOG.md"
-  ]
+  ],
+  "scripts": {
+    "publish-to-npm": "npm publish --access public"
+  }
 }
