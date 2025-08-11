@@ -1,5 +1,9 @@
 # Changelog
 
+## [patch]
+
+YAY #4
+
 ## [1.0.0]
 
 YAY #3
