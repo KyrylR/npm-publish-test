@@ -60,7 +60,8 @@ function main() {
     fail('Missing top-level "# Changelog" title');
   }
 
-  console.log('CHANGELOG.md validation passed');
+  console.log('CHANGELOG.md validation passed. Expected release notes:');
+  console.log(section)
 }
 
 main();
