@@ -8,9 +8,9 @@ import computeNextVersion from './compute-next-version';
 import {allowedWhenNotRc, allowedWhenRc} from './constants';
 import {getTopSection, readJSON, writeJSON} from './utils';
 
-import type {Level} from './types';
+import type {Core, Level} from './types';
 
-export default async function applyRelease(): Promise<{skip: boolean, version: string, notes: string}> {
+export default async function applyRelease(core: Core): Promise<void> {
   const root = process.cwd();
   const pkgPath = path.join(root, 'package.json');
   const changelogPath = path.join(root, 'CHANGELOG.md');
@@ -36,7 +36,10 @@ export default async function applyRelease(): Promise<{skip: boolean, version: s
   if (body.trim().length === 0) throw new Error('Release notes section is empty');
 
   if (level === 'none') {
-    return {skip: true, version: pkg.version, notes: body};
+    core.setOutput('skip', String(true));
+    core.setOutput('version', pkg.version);
+    core.setOutput('notes', body);
+    return;
   }
 
   const {next} = computeNextVersion();
@@ -51,7 +54,11 @@ export default async function applyRelease(): Promise<{skip: boolean, version: s
   }
   fs.writeFileSync(changelogPath, `${lines.join('\n')}\n`);
 
-  return {skip: false, version: next, notes: body};
+  core.setOutput('skip', String(false));
+  core.setOutput('version', next);
+  core.setOutput('notes', body);
+
+  return;
 }
 
 
