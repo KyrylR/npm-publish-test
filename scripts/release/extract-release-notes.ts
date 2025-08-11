@@ -29,13 +29,6 @@ export default function extractReleaseNotes({ version }: { version?: string } = 
   for (let i = start + 1; i < lines.length; i += 1) {
     if (h2.test(lines[i])) { end = i; break; }
   }
-  const body = lines.slice(start + 1, end).join('\n').trim();
-  return body;
+  
+  return lines.slice(start + 1, end).join('\n').trim();
 }
-
-if (require.main === module) {
-  const notes = extractReleaseNotes();
-  process.stdout.write(notes);
-}
-
-

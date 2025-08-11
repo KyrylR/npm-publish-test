@@ -17,8 +17,10 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
+
       - name: Set up environment
         uses: ./.github/actions/setup
+
       - id: state
         name: Compute release state
         uses: actions/github-script@v7
@@ -26,15 +28,9 @@ jobs:
           result-encoding: string
           script: |
             require('ts-node/register/transpile-only');
-            const { execSync } = require('node:child_process');
-            const mod = require('./scripts/release/extract-release-notes.ts');
-            const extractNotes = mod.default ?? mod;
-            const isReleaseCommit = /^chore\(release\):/m.test(execSync('git log -1 --pretty=%B', { encoding: 'utf8' }));
-            const version = require('./package.json').version;
-            const notes = extractNotes({ version }) || '';
-            core.setOutput('is_release_commit', String(isReleaseCommit));
-            core.setOutput('local_version', version);
-            core.setOutput('notes', notes);
+            const mod = require('./scripts/release/compute-release-state.ts');
+            const computeReleaseState = mod.default ?? mod;
+            await computeReleaseState({ core });
     outputs:
       local_version: ${{ steps.state.outputs.local_version }}
       notes: ${{ steps.state.outputs.notes }}

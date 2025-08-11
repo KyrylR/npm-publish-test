@@ -2,7 +2,9 @@
 
 import fs from 'fs';
 import path from 'path';
+
 import { allowedWhenNotRc, allowedWhenRc } from './constants';
+
 import type {Level} from "./types";
 
 function fail(message: string): never {

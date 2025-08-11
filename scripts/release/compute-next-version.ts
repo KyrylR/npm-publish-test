@@ -2,9 +2,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import { allowedWhenNotRc, allowedWhenRc } from './constants';
-import type { Level } from './types';
+
 import { bumpBase, parseRc, readJSON } from './utils';
+import { allowedWhenNotRc, allowedWhenRc } from './constants';
+
+import type { Level } from './types';
 
 export default function computeNextVersion(): { current: string; level: Level; next: string } {
   const pkgPath = path.resolve(process.cwd(), 'package.json');
@@ -68,15 +70,3 @@ export default function computeNextVersion(): { current: string; level: Level; n
   }
   return { current: pkg.version, level, next };
 }
-
-if (require.main === module) {
-  try {
-    const res = computeNextVersion();
-    process.stdout.write(JSON.stringify(res));
-  } catch (err: any) {
-    console.error(err?.message ?? String(err));
-    process.exit(1);
-  }
-}
-
-

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+
 import type { Level, TopSection } from './types';
 
 export function readJSON<T = any>(filePath: string): T {

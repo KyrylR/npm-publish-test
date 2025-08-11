@@ -3,13 +3,14 @@
 import fs from 'fs';
 import path from 'path';
 
-import type {Core, Level} from './types';
 import computeNextVersion from './compute-next-version';
 
-import { allowedWhenNotRc, allowedWhenRc } from './constants';
-import { getTopSection, readJSON, writeJSON } from './utils';
+import {allowedWhenNotRc, allowedWhenRc} from './constants';
+import {getTopSection, readJSON, writeJSON} from './utils';
 
-export default async function applyRelease({ core }: { core?: Core } = {}) {
+import type {Core, Level} from './types';
+
+export default async function applyRelease(core: Core) {
   const root = process.cwd();
   const pkgPath = path.join(root, 'package.json');
   const changelogPath = path.join(root, 'CHANGELOG.md');
@@ -19,7 +20,7 @@ export default async function applyRelease({ core }: { core?: Core } = {}) {
   const pkg = readJSON<{ version: string }>(pkgPath);
   const changelog = fs.readFileSync(changelogPath, 'utf8');
 
-  const { level, body, start } = getTopSection(changelog);
+  const {level, body, start} = getTopSection(changelog);
   if (!level) throw new Error('Top H2 tag not found');
 
   const pkgIsRc = /-rc\.\d+$/.test(pkg.version);
@@ -35,19 +36,17 @@ export default async function applyRelease({ core }: { core?: Core } = {}) {
   if (body.trim().length === 0) throw new Error('Release notes section is empty');
 
   if (level === 'none') {
-    const result = { skip: true, version: pkg.version, notes: body } as const;
-    if (core) {
-      core.setOutput('skip', String(true));
-      core.setOutput('version', pkg.version);
-      core.setOutput('notes', body);
-    }
+    core.setOutput('skip', String(true));
+    core.setOutput('version', pkg.version);
+    core.setOutput('notes', body);
+
     return;
   }
 
-  const { next } = computeNextVersion();
+  const {next} = computeNextVersion();
 
   // Update package.json version
-  writeJSON(pkgPath, { ...pkg, version: next });
+  writeJSON(pkgPath, {...pkg, version: next});
 
   // Rewrite top section heading to the new version number
   const lines = changelog.split(/\r?\n/);
@@ -56,24 +55,11 @@ export default async function applyRelease({ core }: { core?: Core } = {}) {
   }
   fs.writeFileSync(changelogPath, `${lines.join('\n')}\n`);
 
-  const result = { skip: false, version: next, notes: body } as const;
-  if (core) {
-    core.setOutput('skip', String(result.skip));
-    core.setOutput('version', result.version);
-    core.setOutput('notes', result.notes);
-  }
-  return;
-}
+  core.setOutput('skip', String(false));
+  core.setOutput('version', next);
+  core.setOutput('notes', body);
 
-if (require.main === module) {
-  applyRelease()
-    .then((res) => {
-      process.stdout.write(JSON.stringify(res));
-    })
-    .catch((err: any) => {
-      console.error(err?.message ?? String(err));
-      process.exit(1);
-    });
+  return;
 }
 
 

@@ -9,7 +9,7 @@ export type Level =
   | 'rc'
   | 'release';
 
-export type Core = { setOutput: (key: string, value: string) => void } | undefined;
+export type Core = { setOutput: (key: string, value: string) => void };
 
 export type TopSection = {
   level: string | null;
