@@ -1,5 +1,9 @@
 # Changelog
 
+## [release]
+
+YAY #15
+
 ## [1.3.2-rc.0]
 
 YAY #14

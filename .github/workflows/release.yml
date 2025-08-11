@@ -28,9 +28,7 @@ jobs:
           result-encoding: string
           script: |
             require('ts-node/register/transpile-only');
-            const mod = require('./scripts/release/compute-release-state.ts');
-            const computeReleaseState = mod.default ?? mod;
-            await computeReleaseState({ core });
+            await require('./scripts/release/compute-release-state.ts').default(core);
     outputs:
       local_version: ${{ steps.state.outputs.local_version }}
       notes: ${{ steps.state.outputs.notes }}
