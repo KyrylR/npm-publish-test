@@ -1,6 +1,6 @@
 # Changelog
 
-[patch-rc]
+## [patch-rc]
 
 YAY #14
 
