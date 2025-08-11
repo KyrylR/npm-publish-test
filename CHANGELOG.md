@@ -1,6 +1,6 @@
 # Changelog
 
-## [patch-rc]
+## [1.3.2-rc.0]
 
 YAY #14
 
@@ -68,6 +68,7 @@ Something
 
 * list 
 * list 2
+
 
 
 
