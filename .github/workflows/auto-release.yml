@@ -37,14 +37,11 @@ jobs:
 
       - id: apply
         name: Compute and apply next version
-        run: |
-          out=$(node scripts/release/apply-release.js)
-          echo "$out"
-          echo "skip=$(echo "$out" | node -pe 'JSON.parse(fs.readFileSync(0,"utf8")).skip')" >> "$GITHUB_OUTPUT"
-          echo "version=$(echo "$out" | node -pe 'JSON.parse(fs.readFileSync(0,"utf8")).version')" >> "$GITHUB_OUTPUT"
-          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$out" | node -pe 'JSON.parse(fs.readFileSync(0,"utf8")).notes' >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const applyRelease = require('./scripts/release/apply-release.js');
+            await applyRelease({ core });
 
       - name: Commit version bump and changelog update
         if: steps.apply.outputs.skip != 'true'

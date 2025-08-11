@@ -4,8 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 function fail(message) {
-  console.error(message);
-  process.exit(1);
+  throw new Error(message);
 }
 
 function readJSON(p) {
@@ -28,7 +27,11 @@ function getTopSection(changelogContent) {
   }
   if (topIdx === -1) return { level: null, body: '', start: -1, end: -1 };
 
-  const level = allLines[topIdx].replace(/^##\s*\[/, '').replace(/\]\s*$/, '').trim().toLowerCase();
+  const level = allLines[topIdx]
+    .replace(/^##\s*\[/, '')
+    .replace(/\]\s*$/, '')
+    .trim()
+    .toLowerCase();
   let endIdx = allLines.length;
   for (let i = topIdx + 1; i < allLines.length; i += 1) {
     if (/^##\s*\[.+?\]\s*$/.test(allLines[i])) {
@@ -40,7 +43,7 @@ function getTopSection(changelogContent) {
   return { level, body, start: topIdx, end: endIdx };
 }
 
-function main() {
+async function applyRelease({ core } = {}) {
   const root = process.cwd();
   const pkgPath = path.join(root, 'package.json');
   const changelogPath = path.join(root, 'CHANGELOG.md');
@@ -49,18 +52,24 @@ function main() {
   const pkg = readJSON(pkgPath);
   const changelog = fs.readFileSync(changelogPath, 'utf8');
 
-  const { level, body, start, end } = getTopSection(changelog);
+  const { level, body, start } = getTopSection(changelog);
   if (!level) fail('Top H2 tag not found');
   if (!['patch', 'minor', 'major', 'none'].includes(level)) fail('Top H2 tag must be one of patch|minor|major|none');
   if (body.trim().length === 0) fail('Release notes section is empty');
 
-  // If level is none, signal skip and exit without changing files
   if (level === 'none') {
-    process.stdout.write(JSON.stringify({ skip: true, version: pkg.version, notes: body }));
-    return;
+    const result = { skip: true, version: pkg.version, notes: body };
+    if (core) {
+      core.setOutput('skip', String(result.skip));
+      core.setOutput('version', result.version);
+      core.setOutput('notes', result.notes);
+    }
+    return result;
   }
 
-  const { next } = JSON.parse(require('child_process').execSync('node scripts/release/compute-next-version.js', { encoding: 'utf8' }));
+  const { next } = JSON.parse(
+    require('child_process').execSync('node scripts/release/compute-next-version.js', { encoding: 'utf8' })
+  );
 
   // Update package.json version
   pkg.version = next;
@@ -73,10 +82,26 @@ function main() {
   }
   fs.writeFileSync(changelogPath, `${lines.join('\n')}\n`);
 
-  // Output for CI
-  process.stdout.write(JSON.stringify({ skip: false, version: next, notes: body }));
+  const result = { skip: false, version: next, notes: body };
+  if (core) {
+    core.setOutput('skip', String(result.skip));
+    core.setOutput('version', result.version);
+    core.setOutput('notes', result.notes);
+  }
+  return result;
 }
 
-main();
+module.exports = applyRelease;
+
+if (require.main === module) {
+  applyRelease()
+    .then((res) => {
+      process.stdout.write(JSON.stringify(res));
+    })
+    .catch((err) => {
+      console.error(err.message || String(err));
+      process.exit(1);
+    });
+}
 
 
