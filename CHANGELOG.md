@@ -1,5 +1,9 @@
 # Changelog
 
+[minor]
+
+YAY #6
+
 ## [1.0.2]
 
 YAY #5

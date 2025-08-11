@@ -63,10 +63,20 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
-      - name: Setup
-        uses: ./.github/actions/setup
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: npm
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Install packages
+        run: npm install
+        shell: bash
+
       - name: Publish to npm
-        working-directory: ./
+        run: npm run publish-to-npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
-        run: npm run publish-to-npm
+
