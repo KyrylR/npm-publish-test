@@ -1,21 +1,20 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import computeNextVersion from './compute-next-version';
 
-function fail(message) {
-  throw new Error(message);
+type Core = { setOutput: (k: string, v: string) => void } | undefined;
+
+function readJSON<T = any>(p: string): T {
+  return JSON.parse(fs.readFileSync(p, 'utf8')) as T;
 }
 
-function readJSON(p) {
-  return JSON.parse(fs.readFileSync(p, 'utf8'));
-}
-
-function writeJSON(p, obj) {
+function writeJSON(p: string, obj: unknown): void {
   fs.writeFileSync(p, `${JSON.stringify(obj, null, 2)}\n`);
 }
 
-function getTopSection(changelogContent) {
+function getTopSection(changelogContent: string): { level: string | null; body: string; start: number; end: number } {
   const h2Regex = /^##\s*\[(.+?)\]\s*$/m;
   const allLines = changelogContent.split(/\r?\n/);
   let topIdx = -1;
@@ -43,22 +42,22 @@ function getTopSection(changelogContent) {
   return { level, body, start: topIdx, end: endIdx };
 }
 
-async function applyRelease({ core } = {}) {
+export default async function applyRelease({ core }: { core?: Core } = {}): Promise<{ skip: boolean; version: string; notes: string }> {
   const root = process.cwd();
   const pkgPath = path.join(root, 'package.json');
   const changelogPath = path.join(root, 'CHANGELOG.md');
-  if (!fs.existsSync(changelogPath)) fail('CHANGELOG.md not found');
+  if (!fs.existsSync(changelogPath)) throw new Error('CHANGELOG.md not found');
 
-  const pkg = readJSON(pkgPath);
+  const pkg = readJSON<{ version: string }>(pkgPath);
   const changelog = fs.readFileSync(changelogPath, 'utf8');
 
   const { level, body, start } = getTopSection(changelog);
-  if (!level) fail('Top H2 tag not found');
-  if (!['patch', 'minor', 'major', 'none'].includes(level)) fail('Top H2 tag must be one of patch|minor|major|none');
-  if (body.trim().length === 0) fail('Release notes section is empty');
+  if (!level) throw new Error('Top H2 tag not found');
+  if (!['patch', 'minor', 'major', 'none'].includes(level)) throw new Error('Top H2 tag must be one of patch|minor|major|none');
+  if (body.trim().length === 0) throw new Error('Release notes section is empty');
 
   if (level === 'none') {
-    const result = { skip: true, version: pkg.version, notes: body };
+    const result = { skip: true, version: pkg.version, notes: body } as const;
     if (core) {
       core.setOutput('skip', String(result.skip));
       core.setOutput('version', result.version);
@@ -67,15 +66,11 @@ async function applyRelease({ core } = {}) {
     return result;
   }
 
-  const { next } = JSON.parse(
-    require('child_process').execSync('node scripts/release/compute-next-version.js', { encoding: 'utf8' })
-  );
+  const { next } = computeNextVersion();
 
   // Update package.json version
-  pkg.version = next;
-  writeJSON(pkgPath, pkg);
-
-  require('child_process').execSync('npm install', { encoding: 'utf8' })
+  const nextPkg = { ...pkg, version: next };
+  writeJSON(pkgPath, nextPkg);
 
   // Rewrite top section heading to the new version number
   const lines = changelog.split(/\r?\n/);
@@ -84,7 +79,7 @@ async function applyRelease({ core } = {}) {
   }
   fs.writeFileSync(changelogPath, `${lines.join('\n')}\n`);
 
-  const result = { skip: false, version: next, notes: body };
+  const result = { skip: false, version: next, notes: body } as const;
   if (core) {
     core.setOutput('skip', String(result.skip));
     core.setOutput('version', result.version);
@@ -93,15 +88,13 @@ async function applyRelease({ core } = {}) {
   return result;
 }
 
-module.exports = applyRelease;
-
 if (require.main === module) {
   applyRelease()
     .then((res) => {
       process.stdout.write(JSON.stringify(res));
     })
-    .catch((err) => {
-      console.error(err.message || String(err));
+    .catch((err: any) => {
+      console.error(err?.message ?? String(err));
       process.exit(1);
     });
 }

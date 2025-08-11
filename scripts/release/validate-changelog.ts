@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-function fail(message) {
-  console.error(`CHANGELOG validation failed: ${message}`);
-  process.exit(1);
+function fail(message: string): never {
+  throw new Error(`CHANGELOG validation failed: ${message}`);
 }
 
-function main() {
+export default function validateChangelog(): void {
   const changelogPath = path.resolve(process.cwd(), 'CHANGELOG.md');
   if (!fs.existsSync(changelogPath)) {
     fail('CHANGELOG.md not found at repository root');
@@ -60,10 +59,17 @@ function main() {
     fail('Missing top-level "# Changelog" title');
   }
 
-  console.log('CHANGELOG.md validation passed. Expected release notes:');
-  console.log(lines.slice(firstH2Index + 1, nextH2Index).join('\n'))
+  // If we get here, validation passed
 }
 
-main();
+if (require.main === module) {
+  try {
+    validateChangelog();
+    console.log('CHANGELOG.md validation passed.');
+  } catch (err: any) {
+    console.error(err?.message ?? String(err));
+    process.exit(1);
+  }
+}
 
 

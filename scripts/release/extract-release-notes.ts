@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-function extractReleaseNotes({ version } = {}) {
+export default function extractReleaseNotes({ version }: { version?: string } = {}): string {
   const root = process.cwd();
   const changelogPath = path.resolve(root, 'CHANGELOG.md');
   if (!fs.existsSync(changelogPath)) {
@@ -11,7 +11,7 @@ function extractReleaseNotes({ version } = {}) {
   }
   const changelog = fs.readFileSync(changelogPath, 'utf8');
 
-  const pkgVersion = version || JSON.parse(fs.readFileSync(path.resolve(root, 'package.json'), 'utf8')).version;
+  const pkgVersion = version || (JSON.parse(fs.readFileSync(path.resolve(root, 'package.json'), 'utf8')) as { version: string }).version;
   const escapedVersion = pkgVersion.replace(/\./g, '\\.');
   const header = new RegExp(`^##\\s*\\[${escapedVersion}\\]\\s*$`, 'm');
 
@@ -31,8 +31,6 @@ function extractReleaseNotes({ version } = {}) {
   const body = lines.slice(start + 1, end).join('\n').trim();
   return body;
 }
-
-module.exports = extractReleaseNotes;
 
 if (require.main === module) {
   const notes = extractReleaseNotes();

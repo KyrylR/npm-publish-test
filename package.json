@@ -1,5 +1,5 @@
 {
-  "name": "npm-publish-test-512351",
+  "name": "niv-zkevm-core",
   "version": "1.1.0",
   "license": "None",
   "author": "test",
@@ -9,5 +9,11 @@
   ],
   "scripts": {
     "publish-to-npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4"
   }
 }

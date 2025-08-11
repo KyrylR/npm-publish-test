@@ -17,7 +17,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Validate structure
-        run: node scripts/release/validate-changelog.js
+        run: npx tsx scripts/release/validate-changelog.ts
 
   release:
     name: Apply version and tag
@@ -40,7 +40,9 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const applyRelease = require('./scripts/release/apply-release.js');
+            require('ts-node/register/transpile-only');
+            const mod = require('./scripts/release/apply-release.ts');
+            const applyRelease = mod.default ?? mod;
             await applyRelease({ core });
 
       - run: bash scripts/git-user-config.sh
