@@ -1,5 +1,7 @@
 # Changelog
 
+## [none]
+
 ## [1.2.0-rc.1]
 
 YAY #10
