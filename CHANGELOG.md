@@ -1,6 +1,6 @@
 # Changelog
 
-## [minor-rc]
+## [1.2.0-rc.0]
 
 YAY # 9
 
@@ -48,6 +48,7 @@ Something
 
 * list 
 * list 2
+
 
 
 
