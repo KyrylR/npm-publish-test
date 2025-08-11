@@ -43,11 +43,10 @@ jobs:
             const applyRelease = require('./scripts/release/apply-release.js');
             await applyRelease({ core });
 
+      - run: bash scripts/git-user-config.sh
       - name: Commit version bump and changelog update
         if: steps.apply.outputs.skip != 'true'
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
           git add package.json package-lock.json CHANGELOG.md
           if ! git diff --cached --quiet; then
             git commit -m "chore(release): v${{ steps.apply.outputs.version }}"
