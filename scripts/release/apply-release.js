@@ -75,6 +75,8 @@ async function applyRelease({ core } = {}) {
   pkg.version = next;
   writeJSON(pkgPath, pkg);
 
+  exec("npm install")
+
   // Rewrite top section heading to the new version number
   const lines = changelog.split(/\r?\n/);
   if (start >= 0) {

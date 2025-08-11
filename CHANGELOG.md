@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.2]
+## [minor]
 
 YAY #2
 
