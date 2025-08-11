@@ -1,6 +1,8 @@
 # Changelog
 
-[minor-rc]
+## [minor-rc]
+
+YAY # 9
 
 ## [1.1.2]
 
