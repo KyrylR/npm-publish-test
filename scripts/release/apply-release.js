@@ -75,7 +75,7 @@ async function applyRelease({ core } = {}) {
   pkg.version = next;
   writeJSON(pkgPath, pkg);
 
-  exec("npm install")
+  require('child_process').execSync('npm install', { encoding: 'utf8' })
 
   // Rewrite top section heading to the new version number
   const lines = changelog.split(/\r?\n/);
