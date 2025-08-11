@@ -61,7 +61,7 @@ function main() {
   }
 
   console.log('CHANGELOG.md validation passed. Expected release notes:');
-  console.log(section)
+  console.log(lines.slice(firstH2Index + 1, nextH2Index).join('\n'))
 }
 
 main();
