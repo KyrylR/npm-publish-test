@@ -53,7 +53,17 @@ export default async function applyRelease({ core }: { core?: Core } = {}): Prom
 
   const { level, body, start } = getTopSection(changelog);
   if (!level) throw new Error('Top H2 tag not found');
-  if (!['patch', 'minor', 'major', 'none'].includes(level)) throw new Error('Top H2 tag must be one of patch|minor|major|none');
+  const allowedWhenNotRc = new Set(['patch', 'minor', 'major', 'none', 'patch-rc', 'minor-rc', 'major-rc']);
+  const allowedWhenRc = new Set(['rc', 'release', 'none']);
+  const pkgIsRc = /-rc\.\d+$/.test(pkg.version);
+  const normalized = String(level).toLowerCase();
+  if (!(pkgIsRc ? allowedWhenRc.has(normalized) : allowedWhenNotRc.has(normalized))) {
+    if (pkgIsRc) {
+      throw new Error('Top H2 tag must be one of rc|release when current version is an RC');
+    } else {
+      throw new Error('Top H2 tag must be one of patch|minor|major|none|patch-rc|minor-rc|major-rc when not in RC');
+    }
+  }
   if (body.trim().length === 0) throw new Error('Release notes section is empty');
 
   if (level === 'none') {

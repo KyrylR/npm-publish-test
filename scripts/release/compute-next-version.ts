@@ -3,13 +3,13 @@
 import fs from 'fs';
 import path from 'path';
 
-type Level = 'major' | 'minor' | 'patch' | 'none';
+type Level = 'major' | 'minor' | 'patch' | 'none' | 'major-rc' | 'minor-rc' | 'patch-rc' | 'rc' | 'release';
 
 function readJSON<T = any>(p: string): T {
   return JSON.parse(fs.readFileSync(p, 'utf8')) as T;
 }
 
-function bump(version: string, level: Level): string {
+function bumpBase(version: string, level: 'major' | 'minor' | 'patch' | 'none'): string {
   const [majorStr, minorStr, patchStr] = version.split('.');
   const major = parseInt(majorStr, 10);
   const minor = parseInt(minorStr, 10);
@@ -29,6 +29,14 @@ function bump(version: string, level: Level): string {
   }
 }
 
+function parseRc(version: string): { base: string; rc: number | null } {
+  const m = version.match(/^(\d+)\.(\d+)\.(\d+)(?:-rc\.(\d+))?$/);
+  if (!m) throw new Error(`Invalid semver in package.json: ${version}`);
+  const base = `${m[1]}.${m[2]}.${m[3]}`;
+  const rc = m[4] ? parseInt(m[4], 10) : null;
+  return { base, rc };
+}
+
 export default function computeNextVersion(): { current: string; level: Level; next: string } {
   const pkgPath = path.resolve(process.cwd(), 'package.json');
   const changelogPath = path.resolve(process.cwd(), 'CHANGELOG.md');
@@ -42,11 +50,55 @@ export default function computeNextVersion(): { current: string; level: Level; n
     throw new Error('Could not find top H2 tag in CHANGELOG.md');
   }
   const level = match[1].trim().toLowerCase() as Level;
-  const allowed = new Set<Level>(['patch', 'minor', 'major', 'none']);
-  if (!allowed.has(level)) {
-    throw new Error(`Invalid top H2 tag: ${level}`);
+
+  const { base, rc } = parseRc(pkg.version);
+  const isRc = rc !== null;
+
+  const allowedWhenNotRc: Set<Level> = new Set(['patch', 'minor', 'major', 'none', 'patch-rc', 'minor-rc', 'major-rc']);
+  const allowedWhenRc: Set<Level> = new Set(['rc', 'release', 'none']);
+  if ((isRc && !allowedWhenRc.has(level)) || (!isRc && !allowedWhenNotRc.has(level))) {
+    throw new Error(`Invalid top H2 tag: ${level} for current version ${pkg.version}`);
   }
-  const next = bump(pkg.version, level);
+
+  let next: string;
+  if (!isRc) {
+    switch (level) {
+      case 'none':
+        next = base;
+        break;
+      case 'major':
+      case 'minor':
+      case 'patch':
+        next = bumpBase(base, level);
+        break;
+      case 'major-rc':
+        next = `${bumpBase(base, 'major')}-rc.0`;
+        break;
+      case 'minor-rc':
+        next = `${bumpBase(base, 'minor')}-rc.0`;
+        break;
+      case 'patch-rc':
+        next = `${bumpBase(base, 'patch')}-rc.0`;
+        break;
+      case 'rc':
+      case 'release':
+        throw new Error(`Tag ${level} is only valid when current version is an RC`);
+    }
+  } else {
+    switch (level) {
+      case 'rc':
+        next = `${base}-rc.${rc + 1}`;
+        break;
+      case 'release':
+        next = base;
+        break;
+      case 'none':
+        next = `${base}-rc.${rc}`;
+        break;
+      default:
+        throw new Error(`Tag ${level} is not valid while in RC`);
+    }
+  }
   return { current: pkg.version, level, next };
 }
 

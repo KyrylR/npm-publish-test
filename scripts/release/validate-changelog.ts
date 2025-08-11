@@ -33,10 +33,18 @@ export default function validateChangelog(): void {
     fail('No H2 heading like "## [patch|minor|major|none]" found');
   }
 
-  const allowed = new Set(['patch', 'minor', 'major', 'none']);
+  const pkg = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8')) as { version: string };
+  const isRc = /-rc\.\d+$/.test(pkg.version);
   const normalized = firstH2Tag.toLowerCase();
-  if (!allowed.has(normalized)) {
-    fail(`Top H2 tag must be one of [patch, minor, major, none], got "${firstH2Tag}"`);
+  const allowedWhenNotRc = new Set(['patch', 'minor', 'major', 'none', 'patch-rc', 'minor-rc', 'major-rc']);
+  const allowedWhenRc = new Set(['rc', 'release', 'none']);
+  const isAllowed = isRc ? allowedWhenRc.has(normalized) : allowedWhenNotRc.has(normalized);
+  if (!isAllowed) {
+    if (isRc) {
+      fail(`Project is currently in RC (${pkg.version}). Top H2 tag must be one of [rc, release], got "${firstH2Tag}"`);
+    } else {
+      fail(`Top H2 tag must be one of [patch, minor, major, none, patch-rc, minor-rc, major-rc], got "${firstH2Tag}"`);
+    }
   }
 
   // Extract section content until next H2
@@ -58,8 +66,6 @@ export default function validateChangelog(): void {
   if (!hasTitle) {
     fail('Missing top-level "# Changelog" title');
   }
-
-  // If we get here, validation passed
 }
 
 if (require.main === module) {
