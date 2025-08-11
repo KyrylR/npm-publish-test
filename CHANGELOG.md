@@ -1,6 +1,6 @@
 # Changelog
 
-[minor]
+## [minor]
 
 YAY #6
 
