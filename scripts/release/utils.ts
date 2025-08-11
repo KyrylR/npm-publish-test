@@ -1,5 +1,4 @@
 import fs from 'fs';
-import path from 'path';
 
 import type { Level, TopSection } from './types';
 
@@ -9,10 +8,6 @@ export function readJSON<T = any>(filePath: string): T {
 
 export function writeJSON(filePath: string, obj: unknown): void {
   fs.writeFileSync(filePath, `${JSON.stringify(obj, null, 2)}\n`);
-}
-
-export function resolveRepoPath(relativePath: string): string {
-  return path.resolve(process.cwd(), relativePath);
 }
 
 export function parseRc(version: string): { base: string; rc: number | null } {

@@ -43,9 +43,7 @@ jobs:
         with:
           script: |
             require('ts-node/register/transpile-only');
-            const mod = require('./scripts/release/apply-release.ts');
-            const applyRelease = mod.default ?? mod;
-            await applyRelease(core);
+            await require('./scripts/release/apply-release.ts').default(core);
 
       - run: bash scripts/git-user-config.sh
       - name: Commit version bump and changelog update
