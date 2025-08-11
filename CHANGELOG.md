@@ -1,6 +1,6 @@
 # Changelog
 
-## [minor]
+## [1.3.0]
 
 YAY #12
 
@@ -60,6 +60,7 @@ Something
 
 * list 
 * list 2
+
 
 
 
