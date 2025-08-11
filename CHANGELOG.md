@@ -1,6 +1,6 @@
 # Changelog
 
-## [patch]
+## [1.0.1]
 
 YAY #4
 
@@ -28,5 +28,6 @@ Something
 
 * list 
 * list 2
+
 
 
