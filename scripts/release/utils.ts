@@ -1,13 +1,23 @@
-import fs from 'fs';
+import fs from "fs";
+import path from "path";
+import { allowedWhenNotRc, allowedWhenRc } from "./constants";
 
-import type { Level, TopSection } from './types';
+import type { Level, TopSection } from "./types";
 
 export function readJSON<T = any>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
+  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
 }
 
 export function writeJSON(filePath: string, obj: unknown): void {
   fs.writeFileSync(filePath, `${JSON.stringify(obj, null, 2)}\n`);
+}
+
+export function getPkgPath(): string {
+  return path.resolve(process.cwd(), "package.json");
+}
+
+export function getChangelogPath(): string {
+  return path.resolve(process.cwd(), "CHANGELOG.md");
 }
 
 export function parseRc(version: string): { base: string; rc: number | null } {
@@ -18,11 +28,8 @@ export function parseRc(version: string): { base: string; rc: number | null } {
   return { base, rc };
 }
 
-export function bumpBase(
-  version: string,
-  level: Extract<Level, 'major' | 'minor' | 'patch' | 'none'>
-): string {
-  const [majorStr, minorStr, patchStr] = version.split('.');
+export function bumpBase(version: string, level: Extract<Level, "major" | "minor" | "patch" | "none">): string {
+  const [majorStr, minorStr, patchStr] = version.split(".");
   const major = parseInt(majorStr, 10);
   const minor = parseInt(minorStr, 10);
   const patch = parseInt(patchStr, 10);
@@ -30,13 +37,13 @@ export function bumpBase(
     throw new Error(`Invalid semver in package.json: ${version}`);
   }
   switch (level) {
-    case 'major':
+    case "major":
       return `${major + 1}.0.0`;
-    case 'minor':
+    case "minor":
       return `${major}.${minor + 1}.0`;
-    case 'patch':
+    case "patch":
       return `${major}.${minor}.${patch + 1}`;
-    case 'none':
+    case "none":
       return version;
   }
 }
@@ -51,11 +58,11 @@ export function getTopSection(changelogContent: string): TopSection {
       break;
     }
   }
-  if (topIdx === -1) return { level: null, body: '', start: -1, end: -1 };
+  if (topIdx === -1) return { level: null, body: "", start: -1, end: -1 };
 
   const level = allLines[topIdx]
-    .replace(/^##\s*\[/, '')
-    .replace(/\]\s*$/, '')
+    .replace(/^##\s*\[/, "")
+    .replace(/\]\s*$/, "")
     .trim()
     .toLowerCase();
   let endIdx = allLines.length;
@@ -65,8 +72,32 @@ export function getTopSection(changelogContent: string): TopSection {
       break;
     }
   }
-  const body = allLines.slice(topIdx + 1, endIdx).join('\n').trim();
+  const body = allLines
+    .slice(topIdx + 1, endIdx)
+    .join("\n")
+    .trim();
   return { level, body, start: topIdx, end: endIdx };
 }
 
-
+export function validateReleaseTopSection({
+  level,
+  body,
+  pkgIsRc,
+}: {
+  level: string | null;
+  body: string;
+  pkgIsRc: boolean;
+}): void {
+  if (!level) throw new Error("Top H2 tag not found");
+  const normalized = String(level).toLowerCase() as Level;
+  if (!(pkgIsRc ? allowedWhenRc.has(normalized) : allowedWhenNotRc.has(normalized))) {
+    if (pkgIsRc) {
+      throw new Error("Top H2 tag must be one of rc|release when current version is an RC");
+    } else {
+      throw new Error(
+        "Top H2 tag must be one of patch|minor|major|none|patch-rc|minor-rc|major-rc when not in RC",
+      );
+    }
+  }
+  if (body.trim().length === 0) throw new Error("Release notes section is empty");
+}

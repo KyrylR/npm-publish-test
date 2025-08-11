@@ -1,29 +1,29 @@
 #!/usr/bin/env node
 
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import { getChangelogPath, getPkgPath, readJSON } from "./utils";
 
-import { allowedWhenNotRc, allowedWhenRc } from './constants';
+import { allowedWhenNotRc, allowedWhenRc } from "./constants";
 
-import type {Level} from "./types";
+import type { Level } from "./types";
 
 function fail(message: string): never {
   throw new Error(`CHANGELOG validation failed: ${message}`);
 }
 
 export default function validateChangelog(): void {
-  const changelogPath = path.resolve(process.cwd(), 'CHANGELOG.md');
+  const changelogPath = getChangelogPath();
   if (!fs.existsSync(changelogPath)) {
-    fail('CHANGELOG.md not found at repository root');
+    fail("CHANGELOG.md not found at repository root");
   }
 
-  const content = fs.readFileSync(changelogPath, 'utf8');
+  const content = fs.readFileSync(changelogPath, "utf8");
   const lines = content.split(/\r?\n/);
 
   // Find first H2 (## [xxx])
   const h2Regex = /^##\s*\[(.+?)\]\s*$/;
   let firstH2Index = -1;
-  let firstH2Tag = '';
+  let firstH2Tag = "";
   for (let i = 0; i < lines.length; i += 1) {
     const m = lines[i].match(h2Regex);
     if (m) {
@@ -37,7 +37,7 @@ export default function validateChangelog(): void {
     fail('No H2 heading like "## [patch|minor|major|none]" found');
   }
 
-  const pkg = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8')) as { version: string };
+  const pkg = readJSON<{ version: string }>(getPkgPath());
   const isRc = /-rc\.\d+$/.test(pkg.version);
   const normalized = firstH2Tag.toLowerCase() as Level;
 
@@ -59,9 +59,12 @@ export default function validateChangelog(): void {
     }
   }
 
-  const section = lines.slice(firstH2Index + 1, nextH2Index).join('\n').trim();
+  const section = lines
+    .slice(firstH2Index + 1, nextH2Index)
+    .join("\n")
+    .trim();
   if (section.length === 0) {
-    fail('Top section content is empty');
+    fail("Top section content is empty");
   }
 
   // Basic structure: must have a top-level title `# Changelog` somewhere
@@ -74,11 +77,9 @@ export default function validateChangelog(): void {
 if (require.main === module) {
   try {
     validateChangelog();
-    console.log('CHANGELOG.md validation passed.');
+    console.log("CHANGELOG.md validation passed.");
   } catch (err: any) {
     console.error(err?.message ?? String(err));
     process.exit(1);
   }
 }
-
-

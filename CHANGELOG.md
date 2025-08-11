@@ -1,5 +1,9 @@
 # Changelog
 
+[patch]
+
+YAY
+
 ## [1.3.2]
 
 YAY #15
