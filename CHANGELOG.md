@@ -1,6 +1,6 @@
 # Changelog
 
-## [minor]
+## [1.4.0]
 
 Another....
 
@@ -80,6 +80,7 @@ Something
 
 * list 
 * list 2
+
 
 
 
