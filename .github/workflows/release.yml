@@ -45,7 +45,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.ARVOLEAR_RELEASER }}
+          token: ${{ secrets.CUSTOM_TOKEN }}
           tag_name: v${{ needs.state.outputs.local_version }}
           name: Release v${{ needs.state.outputs.local_version }}
           body: |
