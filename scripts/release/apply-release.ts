@@ -2,18 +2,22 @@
 
 import fs from "fs";
 
-import computeNextVersion from "./compute-next-version";
+import computeNextVersion from "../helpers/compute-next-version";
 
-import { allowedWhenNotRc, allowedWhenRc } from "./constants";
-import { getTopSection, readJSON, writeJSON, getPkgPath, getChangelogPath, validateReleaseTopSection } from "./utils";
+import {
+  getTopSection,
+  readJSON,
+  writeJSON,
+  getPkgPath,
+  getChangelogPath,
+  validateReleaseTopSection,
+} from "../helpers";
 
-import type { Core, Level } from "./types";
+import type { Core } from "../helpers";
 
 export default async function applyRelease(core: Core): Promise<void> {
   const pkgPath = getPkgPath();
   const changelogPath = getChangelogPath();
-
-  if (!fs.existsSync(changelogPath)) throw new Error("CHANGELOG.md not found");
 
   const pkg = readJSON<{ version: string }>(pkgPath);
   const changelog = fs.readFileSync(changelogPath, "utf8");

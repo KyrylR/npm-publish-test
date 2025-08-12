@@ -1,5 +1,9 @@
 # Changelog
 
+## [minor]
+
+Another....
+
 ## [1.3.3]
 
 YAY

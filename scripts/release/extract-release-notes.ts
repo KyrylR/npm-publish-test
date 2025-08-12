@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 
 import fs from "fs";
-import { getChangelogPath, getPkgPath, readJSON } from "./utils";
+
+import { getChangelogPath, getPkgPath, readJSON } from "../helpers";
 
 export default function extractReleaseNotes({ version }: { version?: string } = {}): string {
-  const changelogPath = getChangelogPath();
-  if (!fs.existsSync(changelogPath)) {
-    return "";
-  }
-  const changelog = fs.readFileSync(changelogPath, "utf8");
+  const changelog = fs.readFileSync(getChangelogPath(), "utf8");
 
   const pkgVersion = version || readJSON<{ version: string }>(getPkgPath()).version;
   const escapedVersion = pkgVersion.replace(/\./g, "\\.");
