@@ -45,10 +45,15 @@ jobs:
             require('ts-node/register/transpile-only');
             await require('./scripts/release/apply-release.ts').default(core);
 
+      - name: Update package-lock
+        uses: ./.github/actions/setup
+
       - run: bash scripts/git-user-config.sh
       - name: Commit version bump and changelog update
         if: steps.apply.outputs.skip != 'true'
         run: |
+          git remote set-url origin git@github.com:KyrylR/npm-publish-test.git
+
           eval "$(ssh-agent -s)"
           ssh-add - <<< "${{ secrets.DEPLOY_KEY }}"
           
