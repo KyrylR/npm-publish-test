@@ -1,6 +1,6 @@
 # Changelog
 
-## [patch]
+## [1.4.2]
 
 Pls 2
 
@@ -88,6 +88,7 @@ Something
 
 * list 
 * list 2
+
 
 
 
