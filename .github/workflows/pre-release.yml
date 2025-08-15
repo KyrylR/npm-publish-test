@@ -49,16 +49,10 @@ jobs:
       - name: Commit version bump and changelog update
         if: steps.apply.outputs.skip != 'true'
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-      
-          echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-          
           git add package.json package-lock.json CHANGELOG.md
           if ! git diff --cached --quiet; then
             git commit -m "chore(release): v${{ steps.apply.outputs.version }}"
             git tag v${{ steps.apply.outputs.version }}
-            GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes" git push origin
-            GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes" git push origin --tags
+            SSH_AUTH_SOCK= GIT_SSH_COMMAND="ssh '${{ secrets.DEPLOY_KEY }}' -o IdentitiesOnly=yes -v" git push origin main -f
+            SSH_AUTH_SOCK= GIT_SSH_COMMAND="ssh '${{ secrets.DEPLOY_KEY }}' -o IdentitiesOnly=yes -v" git push origin main -f --tags
           fi
